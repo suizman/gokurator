@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"os/user"
 
@@ -29,12 +30,18 @@ func homedir() string {
 	return homedir
 }
 
+func forward(localConn net.Conn, remoteConn *ssh.Client) {
+
+	fmt.Println("Should forward recived bytes")
+}
+
 func SSHConnect() {
-	var user, host, port, keypath string
+	var user, host, port, keypath, bind string
 	flag.StringVar(&user, "user", username(), "an username to login")
 	flag.StringVar(&host, "host", "", "remote host")
 	flag.StringVar(&port, "port", "22", "remote port")
 	flag.StringVar(&keypath, "key", homedir()+"/.ssh/id_rsa", "path to private key")
+	flag.StringVar(&bind, "bind", "localhost:8080", "proxy bind address")
 
 	flag.Parse()
 
@@ -78,6 +85,23 @@ func SSHConnect() {
 		fmt.Printf("Successful connection to: %v@%v:%v\n", user, host, port)
 	}
 
+	localListener, err := net.Listen("tcp", bind)
+	if err != nil {
+		log.Fatalf("Error: Failed to bind to %s (%s)\n", bind, err)
+	} else {
+		fmt.Printf("Listening on %s\n", bind)
+	}
+
+	for {
+		// Setup localConn (type net.Conn)
+		localConn, err := localListener.Accept()
+		if err != nil {
+			log.Fatalf("listen.Accept failed: %v", err)
+		}
+		go forward(localConn, client)
+	}
+
 	defer client.Close()
+
 	fmt.Print("Connection closed")
 }
