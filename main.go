@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/suizman/gokurator/proxy"
+	"github.com/suizman/goxyfy/proxy"
 )
 
 func main() {
