@@ -3,9 +3,11 @@ package proxy
 import (
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net"
+	"net/http"
 	"os"
 	"os/user"
 
@@ -30,9 +32,24 @@ func homedir() string {
 	return homedir
 }
 
-func forward(localConn net.Conn, remoteConn *ssh.Client) {
+func Run(s ssh.Session) {
+	s.Run("ls -l")
+}
 
-	fmt.Println("Should forward recived bytes")
+// Serve HTTP with your SSH server acting as a reverse proxy.
+func HTTPForwarder(remoteListener net.Listener) error {
+
+	handler := func(resp http.ResponseWriter, req *http.Request) {
+		res, err := http.Get("https://ifconfig.co/")
+		if err != nil {
+			log.Fatal(err)
+		}
+		io.Copy(resp, res.Body)
+	}
+	// req := "asdss"
+	// handler(req)
+
+	return http.Serve(remoteListener, http.HandlerFunc(handler))
 }
 
 func SSHConnect() {
@@ -85,23 +102,16 @@ func SSHConnect() {
 		fmt.Printf("Successful connection to: %v@%v:%v\n", user, host, port)
 	}
 
-	localListener, err := net.Listen("tcp", bind)
-	if err != nil {
-		log.Fatalf("Error: Failed to bind to %s (%s)\n", bind, err)
-	} else {
-		fmt.Printf("Listening on %s\n", bind)
-	}
-
-	for {
-		// Setup localConn (type net.Conn)
-		localConn, err := localListener.Accept()
-		if err != nil {
-			log.Fatalf("listen.Accept failed: %v", err)
-		}
-		go forward(localConn, client)
-	}
-
 	defer client.Close()
 
+	// Request the remote side to open port 8080 on all interfaces.
+	remoteListener, err := client.Listen("tcp", "localhost:8080")
+	if err != nil {
+		log.Fatal("unable to register tcp forward: ", err)
+	}
+
+	HTTPForwarder(remoteListener)
+
+	defer remoteListener.Close()
 	fmt.Print("Connection closed")
 }
