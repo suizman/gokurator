@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"net/http"
 
 	p "github.com/suizman/goxyfy/proxy"
 )
@@ -21,8 +22,8 @@ func main() {
 	flag.Parse()
 
 	if server == true {
-		serve := p.ServerListener(bind)
-		p.GetObject(serve, get)
+		http.HandleFunc("/get", p.GetObject)
+		p.Server(bind)
 	}
 
 }
