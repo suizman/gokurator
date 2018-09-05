@@ -1,2 +1,2 @@
 # Goxyfy
-Goxyfy your HTTP downloads using SSH.
+Goxyfy your HTTP downloads.

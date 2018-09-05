@@ -1,21 +1,16 @@
 package proxy
 
 import (
-	"flag"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
-	"net"
-	"net/http"
-	"os"
 	"os/user"
 
 	gh "github.com/mitchellh/go-homedir"
 	"golang.org/x/crypto/ssh"
 )
 
-func username() string {
+func Username() string {
 	current, err := user.Current()
 	if err != nil {
 		log.Fatalf("unable to determine username: %v", err)
@@ -24,7 +19,7 @@ func username() string {
 	return uname
 }
 
-func homedir() string {
+func Homedir() string {
 	homedir, err := (gh.Dir())
 	if err != nil {
 		log.Fatalf("unable to get home dir: %v", err)
@@ -32,42 +27,7 @@ func homedir() string {
 	return homedir
 }
 
-func Run(s ssh.Session) {
-	s.Run("ls -l")
-}
-
-// Serve HTTP with your SSH server acting as a reverse proxy.
-func HTTPForwarder(remoteListener net.Listener) error {
-
-	handler := func(resp http.ResponseWriter, req *http.Request) {
-		res, err := http.Get("https://ifconfig.co/")
-		if err != nil {
-			log.Fatal(err)
-		}
-		io.Copy(resp, res.Body)
-	}
-	// req := "asdss"
-	// handler(req)
-
-	return http.Serve(remoteListener, http.HandlerFunc(handler))
-}
-
-func SSHConnect() {
-	var user, host, port, keypath, bind string
-	flag.StringVar(&user, "user", username(), "an username to login")
-	flag.StringVar(&host, "host", "", "remote host")
-	flag.StringVar(&port, "port", "22", "remote port")
-	flag.StringVar(&keypath, "key", homedir()+"/.ssh/id_rsa", "path to private key")
-	flag.StringVar(&bind, "bind", "localhost:8080", "proxy bind address")
-
-	flag.Parse()
-
-	if host == "" {
-		flag.PrintDefaults()
-		fmt.Println("remote host is mandatory")
-		os.Exit(1)
-	}
-
+func SSHConnect(keypath, user, host, port string) {
 	// A public key may be used to authenticate against the remote
 	// server by using an unencrypted PEM-encoded private key file.
 	//
@@ -103,15 +63,5 @@ func SSHConnect() {
 	}
 
 	defer client.Close()
-
-	// Request the remote side to open port 8080 on all interfaces.
-	remoteListener, err := client.Listen("tcp", "localhost:8080")
-	if err != nil {
-		log.Fatal("unable to register tcp forward: ", err)
-	}
-
-	HTTPForwarder(remoteListener)
-
-	defer remoteListener.Close()
 	fmt.Print("Connection closed")
 }
