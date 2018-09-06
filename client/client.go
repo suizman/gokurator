@@ -15,5 +15,5 @@ func GetObject(object, output, proxy string) {
 	req.Header.Add("object", object)
 	resp, err := client.Do(req)
 	b, _ := ioutil.ReadAll(resp.Body)
-	ioutil.WriteFile(output, b, 755)
+	ioutil.WriteFile(output, b, 0644)
 }
