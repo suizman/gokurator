@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"os"
 
 	c "github.com/suizman/goxyfy/client"
 	p "github.com/suizman/goxyfy/proxy"
@@ -13,7 +14,7 @@ func main() {
 	var user, host, proxy, port, keypath, bind, get, output string
 	var server, client bool
 	flag.BoolVar(&server, "server", false, "run in server mode")
-	flag.BoolVar(&server, "client", false, "run client")
+	flag.BoolVar(&client, "client", false, "run client")
 	flag.StringVar(&user, "user", p.Username(), "an username to login")
 	flag.StringVar(&host, "host", "localhost:8080", "remote host")
 	flag.StringVar(&proxy, "proxy", "http://localhost:8080", "remote host")
@@ -32,8 +33,8 @@ func main() {
 
 	if client == true {
 		c.GetObject(get, output, proxy)
+		os.Exit(0)
 	}
-
 	flag.PrintDefaults()
 
 }
