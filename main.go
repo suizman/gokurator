@@ -11,13 +11,14 @@ import (
 
 func main() {
 
-	var user, host, proxy, port, keypath, bind, get, output string
+	var user, host, proxy, port, keypath, bind, get, output, apikey string
 	var server, client bool
 	flag.BoolVar(&server, "server", false, "run in server mode")
 	flag.BoolVar(&client, "client", false, "run client")
 	flag.StringVar(&user, "user", p.Username(), "an username to login")
 	flag.StringVar(&host, "host", "localhost:8080", "remote host")
 	flag.StringVar(&proxy, "proxy", "http://localhost:8080", "remote host")
+	flag.StringVar(&apikey, "apikey", "funchificacion", "set server key")
 	flag.StringVar(&port, "port", "22", "remote port")
 	flag.StringVar(&keypath, "key", p.Homedir()+"/.ssh/id_rsa", "path to private key")
 	flag.StringVar(&bind, "bind", "localhost:8080", "proxy bind address")
@@ -27,12 +28,12 @@ func main() {
 	flag.Parse()
 
 	if server == true {
-		http.HandleFunc("/get", p.GetObject)
-		p.Server(bind)
+		http.HandleFunc("/get", p.AuthWrapper(p.GetObject, apikey))
+		p.NewServer(bind)
 	}
 
 	if client == true {
-		c.GetObject(get, output, proxy)
+		c.GetObject(get, output, apikey, proxy)
 		os.Exit(0)
 	}
 	flag.PrintDefaults()
